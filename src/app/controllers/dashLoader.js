@@ -182,6 +182,15 @@ function (angular, _, config) {
         };
 
         $scope.elasticsearch_dblist = function (query) {
+
+            // Fusion uses Blob Store API, so Solr query will not work here.
+            if (config.USE_FUSION) {
+                query = query || '';
+            } else {
+                // TODO: getTitleField() + ':' + elasticsearch.query + '*'
+                query = $scope.getTitleField() + ':*' + query + '*';
+            }
+
             dashboard.elasticsearch_list(query, dashboard.current.loader.load_elasticsearch_size).then(
                 function (result) {
                     if (!_.isUndefined(result.response.docs)) {
@@ -222,11 +231,11 @@ function (angular, _, config) {
 
             // Fusion uses Blob Store API, so Solr query will not work here.
             if (config.USE_FUSION) {
-                query = query || ''; 
+                query = query || '';
             } else {
                 // TODO: getTitleField() + ':' + elasticsearch.query + '*'
                 // query += '&start=' + offset;
-                query = $scope.getTitleField() + ':' + query + '*&start=' + offset;
+                query = $scope.getTitleField() + ':*' + query + '*&start=' + offset;
             }
 
             dashboard.elasticsearch_list(query, dashboard.current.loader.load_elasticsearch_size).then(
@@ -234,9 +243,7 @@ function (angular, _, config) {
                     if (!_.isUndefined(result.response.docs)) {
                         $scope.hits = result.response.numFound;
                         // Get the list according to pageNum (paging).
-                        var startIndex = offset;
-                        var endIndex = offset + dashboard.current.loader.load_elasticsearch_size;
-                        $scope.elasticsearch.dashboards = parseDashboardList(result.response.docs).slice(startIndex, endIndex);
+                        $scope.elasticsearch.dashboards = parseDashboardList(result.response.docs);
                     }
                 }
             );
